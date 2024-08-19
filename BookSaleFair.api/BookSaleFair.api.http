@@ -1,0 +1,6 @@
+@BookSaleFair.api_HostAddress = http://localhost:5028
+
+GET {{BookSaleFair.api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
