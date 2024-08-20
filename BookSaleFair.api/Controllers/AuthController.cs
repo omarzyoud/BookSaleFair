@@ -63,7 +63,45 @@ namespace BookSaleFair.api.Controllers
             return BadRequest("something went wrong");
 
         }
+        [HttpPost]
+        [Route("Login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO lrd)
+        {
 
+            var user = await userManager.FindByEmailAsync(lrd.Email);
+            if (user != null)
+            {
+                var checkPassword = await userManager.CheckPasswordAsync(user, lrd.Password);
+                if (checkPassword)
+                {
+                    var roles = await userManager.GetRolesAsync(user);
+                    User usr = bSFDbContext.Users.FirstOrDefault(u => u.Email == lrd.Email);
+                    int usrid = usr.UserId;
+                    string name = usr.Name;
+                    
+
+                    if (roles != null)
+                    {
+
+
+                        var jwttoken = tokenRepository.CreateJWTToken(user, roles.ToList());
+                        var response = new LoginResponseDTO
+                        {
+                            JwtToken = jwttoken,
+                            Roles = roles.ToList(),
+                            UserId = usrid,
+                            Name = name,
+                            
+
+                        };
+
+                        return Ok(response);
+                    }
+                }
+            }
+
+            return BadRequest("Username or password incorrect");
+        }
 
     }
 }
