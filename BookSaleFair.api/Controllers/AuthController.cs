@@ -40,24 +40,21 @@ namespace BookSaleFair.api.Controllers
                 var user = new User
                 {
                     Name = requestDTO.Name,
-                    Type = requestDTO.Type,
+                    Type = "Customer",
                     Email = requestDTO.Email,
                     PasswordHash = requestDTO.password
                 };
                 bSFDbContext.Users.Add(user);
                 await bSFDbContext.SaveChangesAsync();
-                if (requestDTO.Roles != null && requestDTO.Roles.Any())
-                {
-                    identityResult = await userManager.AddToRolesAsync(identityUser, requestDTO.Roles);
+                
+                
+                    identityResult = await userManager.AddToRolesAsync(identityUser, new string[] { "Customer" });
                     if (identityResult.Succeeded)
                     {
                         return Ok("succecfull registered, please login");
                     }
-                }
-                else
-                {
-                    return BadRequest("role not added");
-                }
+                
+               
             }
             else
             {
