@@ -16,20 +16,31 @@ namespace BookSaleFair.api.Repositories
         }
         public string CreateJWTToken(IdentityUser user, List<string> roles)
         {
-            var Claims = new List<Claim>();
-            Claims.Add(new Claim(ClaimTypes.Email, user.Email));
+            var claims = new List<Claim>
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+        new Claim(JwtRegisteredClaimNames.Email, user.Email),
+        new Claim(ClaimTypes.NameIdentifier, user.Id)
+    };
+
             foreach (var role in roles)
             {
-                Claims.Add(new Claim(ClaimTypes.Role, role));
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken(
-                configuration["Jwt:Issuer"], configuration["Jwt:Audience"],
-                Claims, expires: DateAndTime.Now.AddDays(3), signingCredentials: credentials);
-            return new JwtSecurityTokenHandler().WriteToken(token);
 
+            var token = new JwtSecurityToken(
+                issuer: configuration["Jwt:Issuer"],
+                audience: configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddDays(3),
+                signingCredentials: credentials);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
     }
 
 }

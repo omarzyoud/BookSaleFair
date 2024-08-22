@@ -2,10 +2,12 @@
 using BookSaleFair.api.Domain.DTOs;
 using BookSaleFair.api.Domain.Models;
 using BookSaleFair.api.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BookSaleFair.api.Controllers
 {
@@ -101,6 +103,48 @@ namespace BookSaleFair.api.Controllers
             }
 
             return BadRequest("Username or password incorrect");
+        }
+        [HttpPost]
+        [Route("ChangePassword")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the user ID of the logged-in user
+            
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+            
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            var result = await userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+            string email = user.Email;
+            User user2 = await bSFDbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user2==null)
+            {
+                return BadRequest("User not found");
+            }
+            user2.PasswordHash = model.NewPassword;
+            bSFDbContext.Users.Update(user2);           
+            await bSFDbContext.SaveChangesAsync();
+
+            return Ok("Password changed successfully.");
         }
 
     }
