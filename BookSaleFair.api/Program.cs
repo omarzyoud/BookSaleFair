@@ -83,6 +83,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

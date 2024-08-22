@@ -18,11 +18,13 @@ namespace BookSaleFair.api.Controllers
         private readonly BSFDbContext bSFDbContext;
         private readonly UserManager<IdentityUser> userManager;
         private readonly ITokenRepository tokenRepository;
-        public AuthController(BSFDbContext bSFDbContext, UserManager<IdentityUser> userManager, ITokenRepository tokenRepository)
+        private readonly IEmailSender emailSender;
+        public AuthController(BSFDbContext bSFDbContext, UserManager<IdentityUser> userManager, ITokenRepository tokenRepository, IEmailSender emailSender)
         {
             this.bSFDbContext = bSFDbContext;
             this.userManager = userManager;
             this.tokenRepository = tokenRepository;
+            this.emailSender = emailSender;
         }
 
         [HttpPost]
@@ -114,7 +116,7 @@ namespace BookSaleFair.api.Controllers
                 return BadRequest(ModelState);
             }
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the user ID of the logged-in user
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
             if (userId == null)
             {
@@ -146,6 +148,20 @@ namespace BookSaleFair.api.Controllers
 
             return Ok("Password changed successfully.");
         }
-
+        [HttpPost]
+        [Route("SendEmail")]
+        [Authorize]
+        public async Task<IActionResult> SendEmail([FromBody] SendEmailDTO model)
+        {
+            try
+            {
+                await emailSender.SendEmailAsync(model.toemail, model.subject, model.message);
+                return Ok("Email sent Succefully");
+            }
+            catch (Exception ex) 
+            {
+                return  StatusCode(500, $"Failed to send email: {ex.Message}");
+            }
+        }
     }
 }
