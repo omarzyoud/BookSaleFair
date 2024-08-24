@@ -50,7 +50,7 @@ namespace BookSaleFair.api.Controllers
                     Name = requestDTO.Name,
                     Type = "Customer",
                     Email = requestDTO.Email,
-                    PasswordHash = requestDTO.password
+                    
                 };
                 bSFDbContext.Users.Add(user);
                 await bSFDbContext.SaveChangesAsync();
@@ -138,17 +138,7 @@ namespace BookSaleFair.api.Controllers
             if (!result.Succeeded)
             {
                 return BadRequest(result.Errors);
-            }
-            string email = user.Email;
-            User user2 = await bSFDbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
-
-            if (user2==null)
-            {
-                return BadRequest("User not found");
-            }
-            user2.PasswordHash = model.NewPassword;
-            bSFDbContext.Users.Update(user2);           
-            await bSFDbContext.SaveChangesAsync();
+            }                                 
 
             return Ok("Password changed successfully.");
         }

@@ -38,7 +38,7 @@ namespace BookSaleFair.api.Controllers
                     Name = model.Name,
                     Type = "Admin",
                     Email = model.Email,
-                    PasswordHash = model.Password
+                    
                 };
                 bSFDbContext.Users.Add(user);
                 await bSFDbContext.SaveChangesAsync();
