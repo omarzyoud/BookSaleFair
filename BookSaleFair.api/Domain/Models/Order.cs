@@ -13,10 +13,10 @@ namespace BookSaleFair.api.Domain.Models
         public int UserId { get; set; }
 
         [Required]
-        public DateTime OrderDate { get; set; }
+        public DateTime? OrderDate { get; set; }
 
         [Required]
-        public string Status { get; set; } // "Pending", "Accepted", "Rejected"
+        public string Status { get; set; } 
 
         // Navigation properties
         public User User { get; set; }

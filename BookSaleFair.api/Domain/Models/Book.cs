@@ -15,16 +15,16 @@ namespace BookSaleFair.api.Domain.Models
         public string Author { get; set; }
 
         [Required]
-        public decimal Price { get; set; }
-
+        public double Price { get; set; }
+        public byte[] FileData { get; set; }
         [Required]
         [StringLength(50)]
-        public string Subject { get; set; } // e.g., "Science", "Literature"
+        public string Subject { get; set; } 
 
         [Required]
         public int QuantityAvailable { get; set; }
 
-        // Navigation property
+        
         public ICollection<OrderItem> OrderItems { get; set; }
     }
 

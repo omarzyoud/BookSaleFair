@@ -17,7 +17,12 @@ namespace BookSaleFair.api.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Fluent API configuration can go here
+            // Unique index for Email in Users table
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            // Configure relationships between entities
             modelBuilder.Entity<OrderItem>()
                 .HasOne(oi => oi.Order)
                 .WithMany(o => o.OrderItems)
@@ -27,6 +32,11 @@ namespace BookSaleFair.api.Data
                 .HasOne(oi => oi.Book)
                 .WithMany(b => b.OrderItems)
                 .HasForeignKey(oi => oi.BookId);
+
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.User)
+                .WithMany(u => u.Orders)
+                .HasForeignKey(o => o.UserId);
         }
     }
 }
