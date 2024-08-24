@@ -8,6 +8,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Newtonsoft.Json;
+using System.Net;
+using Newtonsoft.Json.Linq;
+
 
 namespace BookSaleFair.api.Controllers
 {
@@ -163,5 +167,47 @@ namespace BookSaleFair.api.Controllers
                 return  StatusCode(500, $"Failed to send email: {ex.Message}");
             }
         }
+        [HttpGet]
+        [Route("ForgotPassword")]        
+        public async Task<IActionResult> ForgotPassword(string Email)
+        {
+            var user = await userManager.FindByEmailAsync(Email);
+            if (user == null)
+            {
+                return BadRequest("User not found.");
+            }
+
+            // Generate password reset token
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            
+
+
+
+            // Create the reset URL
+            var resetUrl = Url.Action("ResetPassword", "Auth", new { token = token, email = user.Email }, Request.Scheme);
+
+            // Send the email with the reset URL (you can use your EmailSender service here)
+            await emailSender.SendEmailAsync(user.Email, "Reset Password",token);            
+            return Ok("Password reset link has been sent to your email.");
+        }
+        [HttpPost]
+        [Route("ResetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDTO requestDTO)
+        {
+            var user = await userManager.FindByEmailAsync(requestDTO.Email);
+            if (user == null)
+            {
+                return BadRequest("User not found.");
+            }           
+            var result = await userManager.ResetPasswordAsync(user, requestDTO.Token, requestDTO.NewPassword);
+
+            if (result.Succeeded)
+            {
+                return Ok("Password has been reset successfully.");
+            }
+
+            return BadRequest("Error while resetting the password.");
+        }
+
     }
 }
