@@ -55,7 +55,7 @@ namespace BookSaleFair.api.Controllers
 
                     if (result.IsNsfw)
                     {                       
-                        return BadRequest("The uploaded image contains explicit content and cannot be processed.");
+                        return BadRequest("The uploaded image contains nude content and cannot be processed.");
                     }
 
                     var book = new Book
