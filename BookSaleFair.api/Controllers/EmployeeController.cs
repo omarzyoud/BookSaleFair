@@ -29,7 +29,7 @@ namespace BookSaleFair.api.Controllers
         }
         [HttpPost]
         [Route("AddBook")]
-        //[Authorize(Roles ="Admin,Employee")]
+        [Authorize(Roles = "Admin,Employee")]
 
         public async Task<IActionResult> AddBook([FromForm] AddBookDTO model)
         {
@@ -42,36 +42,36 @@ namespace BookSaleFair.api.Controllers
                     return BadRequest("Invalid file");
                 }
                 if (IsImage(file.ContentType))
-                
-                {                    
+
+                {
                     byte[] fileData;
                     using (var ms = new MemoryStream())
                     {
                         await file.CopyToAsync(ms);
                         fileData = ms.ToArray();
                     }
-                    
+
                     var result = nsfwSpy.ClassifyImage(fileData);
 
                     if (result.IsNsfw)
-                    {                       
+                    {
                         return BadRequest("The uploaded image contains nude content and cannot be processed.");
                     }
 
                     var book = new Book
                     {
-                        Title=model.Title,
-                        Author=model.Auther,
-                        FileData=fileData,
-                        Price=model.price,
-                        Subject=model.Subject,
-                        QuantityAvailable=model.Quantity
+                        Title = model.Title,
+                        Author = model.Auther,
+                        FileData = fileData,
+                        Price = model.price,
+                        Subject = model.Subject,
+                        QuantityAvailable = model.Quantity
 
 
                     };
                     bSFDbContext.Books.AddAsync(book);
                     await bSFDbContext.SaveChangesAsync();
-                    return Ok(  "Book Added successfully" );
+                    return Ok("Book Added successfully");
                 }
                 else
                 {
@@ -80,18 +80,77 @@ namespace BookSaleFair.api.Controllers
             }
             catch (Exception ex)
             {
-                
+
                 return StatusCode(500, "Internal server error");
             }
 
         }
         private bool IsImage(string contentType)
         {
-            
+
             var acceptedImageTypes = new string[] { "image/jpeg", "image/png", "image/gif", "image/bmp", "image/jpg", "image/webp" };
 
-            
+
             return acceptedImageTypes.Contains(contentType);
+        }
+        [HttpGet]
+        [Route("GetAllBooks")]
+        [Authorize]
+        public async Task<IActionResult> GetAllBooks(int pageNumber = 1, int pageSize = 10, string sortOrder = "asc")
+        {
+            var query = bSFDbContext.Books.AsQueryable();
+
+            
+            query = sortOrder.ToLower() == "desc"
+                ? query.OrderByDescending(b => b.Price)
+                : query.OrderBy(b => b.Price);
+
+           
+            var books = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(b => new BookDTO
+                {
+                    BookId = b.BookId,
+                    Title = b.Title,
+                    Author = b.Author,
+                    Price = b.Price,
+                    Subject = b.Subject,
+                    QuantityAvailable = b.QuantityAvailable
+                })
+                .ToListAsync();
+
+            return Ok(books);
+        }
+
+        [HttpGet]
+        [Route("GetBookById")]
+        [Authorize]
+        public async Task<IActionResult> GetBookById(int id)
+        {
+            var book = await bSFDbContext.Books
+        .Where(b => b.BookId == id)
+        .Select(b => new BookDTO
+        {
+            BookId = b.BookId,
+            Title = b.Title,
+            Author = b.Author,
+            Price = b.Price,
+            Subject = b.Subject,
+            QuantityAvailable = b.QuantityAvailable,
+            Cover = b.FileData
+
+        })
+        .FirstOrDefaultAsync();
+
+            if (book == null)
+            {
+                return NotFound("Book not found.");
+            }
+
+            return Ok(book);
+
+
         }
     }
 }
