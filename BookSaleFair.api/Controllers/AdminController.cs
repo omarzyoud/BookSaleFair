@@ -43,7 +43,7 @@ namespace BookSaleFair.api.Controllers
                     Email = model.email,
 
                 };
-                bSFDbContext.Users.Add(user);
+                bSFDbContext.Users.AddAsync(user);
                 await bSFDbContext.SaveChangesAsync();
 
 
@@ -77,13 +77,15 @@ namespace BookSaleFair.api.Controllers
             {
                 return NotFound("Employee not found in the application database.");
             }
+
             
             var identityResult = await userManager.DeleteAsync(identityUser);
             if (!identityResult.Succeeded)
             {
                 return BadRequest("Failed to delete employee from the Identity system.");
             }
-            
+
+            // Delete the user from the application-specific database
             bSFDbContext.Users.Remove(user);
             await bSFDbContext.SaveChangesAsync();
 

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using NsfwSpyNS;
 using System.Text;
 
 
@@ -18,7 +19,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(Options =>
 {
-    Options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "SCR api", Version = "v1" });
+    Options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "BSF api", Version = "v1" });
     Options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -84,6 +85,7 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddSingleton<INsfwSpy, NsfwSpy>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
