@@ -20,7 +20,7 @@ namespace BookSaleFair.api.Domain.Models
 
         // Navigation properties
         public User User { get; set; }
-        public ICollection<OrderItem> OrderItems { get; set; }
+        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }
 
 }
