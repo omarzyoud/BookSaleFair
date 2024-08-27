@@ -24,7 +24,7 @@ namespace BookSaleFair.api.Controllers
         }
         [HttpPost]
         [Route("CreateOrder")]
-        //[Authorize]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDTO model)
         {
             try
@@ -76,7 +76,7 @@ namespace BookSaleFair.api.Controllers
         }
         [HttpPost]
         [Route("AddBooksToOrder")]
-        //[Authorize]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> AddBooksToOrder(int orderId, [FromBody] List<OrderItemDTO> items)
         {
             var order = await bSFDbContext.Orders.Include(o => o.OrderItems).FirstOrDefaultAsync(o => o.OrderId == orderId);
@@ -109,7 +109,7 @@ namespace BookSaleFair.api.Controllers
         }
         [HttpDelete]
         [Route("DeleteBookFromOrder")]
-        //[Authorize]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> DeleteBookFromOrder(int orderId, int bookId)
         {
             var order = await bSFDbContext.Orders.Include(o => o.OrderItems).FirstOrDefaultAsync(o => o.OrderId == orderId);
@@ -131,7 +131,7 @@ namespace BookSaleFair.api.Controllers
         }
         [HttpPut]
         [Route("ChangeBookQuantityInOrder")]
-        //[Authorize]
+        [Authorize(Roles ="Customer")]
         public async Task<IActionResult> ChangeBookQuantityInOrder(int orderId, int bookId, int newQuantity)
         {
             var order = await bSFDbContext.Orders.Include(o => o.OrderItems).FirstOrDefaultAsync(o => o.OrderId == orderId);
@@ -154,7 +154,7 @@ namespace BookSaleFair.api.Controllers
 
         [HttpDelete]
         [Route("DeleteOrder")]
-       // [Authorize]
+        //[Authorize]
         public async Task<IActionResult> DeleteOrder(int orderId)
         {
             var order = await bSFDbContext.Orders.Include(o => o.OrderItems).FirstOrDefaultAsync(o => o.OrderId == orderId);
@@ -170,7 +170,7 @@ namespace BookSaleFair.api.Controllers
         }
         [HttpGet]
         [Route("GetUserOrders")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> GetUserOrders(int userId)
         {
             var orders = await bSFDbContext.Orders
@@ -199,6 +199,119 @@ namespace BookSaleFair.api.Controllers
             }).ToList();
 
             return Ok(ordersDto);
+        }
+        [HttpPost]
+        [Route("ChangeOrderStatus")]
+        [Authorize(Roles = "Admin,Employee")]
+        public async Task<IActionResult> ChangeOrderStatus(int orderId, string newStatus)
+        {
+            
+            var order = await bSFDbContext.Orders.FindAsync(orderId);
+
+            if (order == null)
+            {
+                return NotFound("Order not found.");
+            }
+         
+            order.Status = newStatus;            
+            await bSFDbContext.SaveChangesAsync();
+            return Ok("Order status updated successfully.");
+        }
+        [HttpGet]
+        [Route("GetOrderStatus")]
+        [Authorize]
+        public async Task<IActionResult> GetOrderStatus(int orderId)
+        {
+            var order = await bSFDbContext.Orders.FindAsync(orderId);
+
+            if (order == null)
+            {
+                return NotFound("Order not found.");
+            }
+           
+            return Ok(new { Status = order.Status });
+        }
+        [HttpGet]
+        [Route("GetAllOrders")]
+        //[Authorize(Roles ="Admin,Employee")]
+        public async Task<IActionResult> GetAllOrders(DateTime? date = null)
+        {
+            IQueryable<Order> ordersQuery = bSFDbContext.Orders
+       .Include(o => o.User)
+       .Include(o => o.OrderItems)
+           .ThenInclude(oi => oi.Book);
+
+            if (date.HasValue)
+            {
+                ordersQuery = ordersQuery.Where(o => o.OrderDate.HasValue && o.OrderDate.Value.Date == date.Value.Date);
+            }
+
+            var orders = await ordersQuery.ToListAsync();
+
+            if (orders.Count == 0)
+            {
+                return NotFound("No orders found.");
+            }
+
+            var orderDTOs = orders.Select(o => new OrderGetDTO
+            {
+                OrderId = o.OrderId,
+                UserId = o.UserId,
+                UserEmail = o.User.Email,
+                OrderDate = o.OrderDate,
+                Status = o.Status,
+
+                OrderItems = o.OrderItems.Select(oi => new OrderItemGetDTO
+                {
+                    BookId = oi.BookId,
+                    BookTitle = oi.Book.Title,
+                    Quantity = oi.Quantity,
+                    Price = oi.Book.Price
+
+                }).ToList()
+            }).ToList();
+
+            return Ok(orderDTOs);
+        }
+        [HttpGet]
+        [Route("SearchBooks")]
+       // [Authorize]
+        public async Task<IActionResult> SearchBooks(string title, string sortByPrice = "asc")
+        {
+            // Validate the input title
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return BadRequest("Title cannot be empty.");
+            }
+
+            // Query the database for books that match the title
+            var booksQuery = bSFDbContext.Books
+                .Where(b => b.Title.Contains(title))
+                .AsQueryable();
+
+            // Apply sorting if requested
+            if (sortByPrice.ToLower() == "asc")
+            {
+                booksQuery = booksQuery.OrderBy(b => b.Price);
+            }
+            else if (sortByPrice.ToLower() == "desc")
+            {
+                booksQuery = booksQuery.OrderByDescending(b => b.Price);
+            }
+
+            // Execute the query and project the results to a DTO
+            var books = await booksQuery.Select(b => new BookDTO
+            {
+                BookId = b.BookId,
+                Title = b.Title,
+                Author = b.Author,
+                Price = b.Price,
+                Subject = b.Subject,
+                QuantityAvailable = b.QuantityAvailable
+            }).ToListAsync();
+
+            // Return the result
+            return Ok(books);
         }
 
 
