@@ -233,7 +233,7 @@ namespace BookSaleFair.api.Controllers
         }
         [HttpGet]
         [Route("GetAllOrders")]
-        //[Authorize(Roles ="Admin,Employee")]
+        [Authorize(Roles ="Admin,Employee")]
         public async Task<IActionResult> GetAllOrders(DateTime? date = null)
         {
             IQueryable<Order> ordersQuery = bSFDbContext.Orders
@@ -273,46 +273,7 @@ namespace BookSaleFair.api.Controllers
 
             return Ok(orderDTOs);
         }
-        [HttpGet]
-        [Route("SearchBooks")]
-       // [Authorize]
-        public async Task<IActionResult> SearchBooks(string title, string sortByPrice = "asc")
-        {
-            // Validate the input title
-            if (string.IsNullOrWhiteSpace(title))
-            {
-                return BadRequest("Title cannot be empty.");
-            }
-
-            // Query the database for books that match the title
-            var booksQuery = bSFDbContext.Books
-                .Where(b => b.Title.Contains(title))
-                .AsQueryable();
-
-            // Apply sorting if requested
-            if (sortByPrice.ToLower() == "asc")
-            {
-                booksQuery = booksQuery.OrderBy(b => b.Price);
-            }
-            else if (sortByPrice.ToLower() == "desc")
-            {
-                booksQuery = booksQuery.OrderByDescending(b => b.Price);
-            }
-
-            // Execute the query and project the results to a DTO
-            var books = await booksQuery.Select(b => new BookDTO
-            {
-                BookId = b.BookId,
-                Title = b.Title,
-                Author = b.Author,
-                Price = b.Price,
-                Subject = b.Subject,
-                QuantityAvailable = b.QuantityAvailable
-            }).ToListAsync();
-
-            // Return the result
-            return Ok(books);
-        }
+        
 
 
     }

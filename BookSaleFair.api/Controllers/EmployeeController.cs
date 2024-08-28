@@ -152,5 +152,45 @@ namespace BookSaleFair.api.Controllers
 
 
         }
+        [HttpGet]
+        [Route("SearchBooks")]
+        [Authorize]
+        public async Task<IActionResult> SearchBooks(string title, string sortByPrice = "asc")
+        {
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return BadRequest("Title cannot be empty.");
+            }
+
+
+            var booksQuery = bSFDbContext.Books
+                .Where(b => b.Title.Contains(title))
+                .AsQueryable();
+
+
+            if (sortByPrice.ToLower() == "asc")
+            {
+                booksQuery = booksQuery.OrderBy(b => b.Price);
+            }
+            else if (sortByPrice.ToLower() == "desc")
+            {
+                booksQuery = booksQuery.OrderByDescending(b => b.Price);
+            }
+
+
+            var books = await booksQuery.Select(b => new BookDTO
+            {
+                BookId = b.BookId,
+                Title = b.Title,
+                Author = b.Author,
+                Price = b.Price,
+                Subject = b.Subject,
+                QuantityAvailable = b.QuantityAvailable
+            }).ToListAsync();
+
+
+            return Ok(books);
+        }
     }
 }
